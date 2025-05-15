@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+</head>
+<body class="bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center min-h-screen p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full text-center">
+    <!-- Avatar -->
+    <div class="flex justify-center mb-4">
+      <img id="userAvatar" src="" alt="User Avatar" class="w-24 h-24 rounded-full border-4 border-indigo-500 shadow-md">
+    </div>
+
+    <!-- User Name -->
+    <h2 id="userName" class="text-xl font-semibold text-gray-800"></h2>
+<div id="userStats" class="mt-6 text-gray-600 text-sm">
+  <p id="deckCount">Decks: Loading...</p>
+  <p id="cardCount">Cards: Loading...</p>
+  <p id="activeTime">Active Time: 0 minutes</p>
+</div>
+    <!-- Icon Buttons -->
+    <div class="flex justify-center gap-4 mt-4">
+      <button id="logoutBtn" class="text-gray-600 hover:text-indigo-500 transition">
+        <i data-lucide="log-out" class="w-6 h-6"></i>
+      </button>
+    </div>
+  </div>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+      <div class="flex justify-around">
+        <!-- Dashboard -->
+        <a href="/dashboard" class="flex flex-col items-center justify-center p-3 text-indigo-600 hover:text-indigo-800">
+          <i class="fa-solid fa-house w-6 h-6 text-indigo-600"></i>
+          <span class="text-xs mt-1">Dashboard</span>
+        </a>
+
+        <!-- Quiz -->
+        <a href="/quiz" class="flex flex-col items-center justify-center p-3 text-gray-500 hover:text-indigo-600">
+          <i class="fa-solid fa-circle-play w-6 h-auto"></i>
+          <span class="text-xs mt-1">Play Game</span>
+        </a>
+        <a href="#" id="share-decks" class="flex flex-col items-center justify-center p-3 text-gray-500 hover:text-indigo-600">
+          <i class="fa-solid fa-share-nodes w-6 h-auto"></i>
+          <span class="text-xs mt-1">Share Decks</span>
+        </a>
+        <a href="#" id="import-decks" class="flex flex-col items-center justify-center p-3 text-gray-500 hover:text-indigo-600">
+  <i class="fa-solid fa-download w-6 h-auto"></i>
+  <span class="text-xs mt-1">Import Deck</span>
+</a>
+        <!-- Profile -->
+        <a href="/profile" class="flex flex-col items-center justify-center p-3 text-gray-500 hover:text-indigo-600">
+        <i class="fa-solid fa-user w-6 h-6 "></i>
+          <span class="text-xs mt-1">Profile</span>
+        </a>
+      </div>
+    </nav>
+    <!-- Share Decks Modal -->
+<div id="shareDecksModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">Share Deck</h3>
+      <button id="closeShareModal" class="text-gray-400 hover:text-gray-500">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    
+    <div class="mb-4">
+      <label for="selectDeck" class="block text-sm font-medium text-gray-700 mb-2">Select Deck to Share</label>
+      <select id="selectDeck" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+        <option value="">-- Select a Deck --</option>
+      </select>
+    </div>
+    
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Deck ID to Copy</label>
+      <div class="flex items-center">
+        <input type="text" id="deckIdToCopy" class="mt-1 block w-full border border-gray-300 rounded-l-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" readonly>
+        <button id="copyDeckId" class="px-4 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700 transition-colors">
+          Copy
+        </button>
+      </div>
+    </div>
+    
+    <p class="text-sm text-gray-500 mt-4">Share this Deck ID with your friend. They can import it from their dashboard.</p>
+  </div>
+</div>
+
+<!-- Import Deck Modal -->
+<div id="importDeckModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">Import Deck</h3>
+      <button id="closeImportModal" class="text-gray-400 hover:text-gray-500">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    
+    <div class="mb-4">
+      <label for="deckIdToImport" class="block text-sm font-medium text-gray-700 mb-2">Deck ID</label>
+      <input type="text" id="deckIdToImport" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Paste the Deck ID here">
+    </div>
+    
+    <button id="importDeckBtn" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+      Import Deck
+    </button>
+  </div>
+</div>
+  <script>
+    lucide.createIcons();
+  </script>
+  <script src="/profile.js"></script>
+    <script src="/shared.js"></script>
+</body>
+</html>
