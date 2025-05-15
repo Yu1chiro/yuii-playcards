@@ -6,17 +6,14 @@ const admin = require('firebase-admin');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const MongoStore = require('connect-mongo');
+
 
 // Initialize Express
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-
-// Perbaikan session configuration
-app.use(express.json());
-app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: [
     'https://yuii-playcards.vercel.app',
@@ -35,16 +32,35 @@ app.use((req, res, next) => {
   }
   next();
 });
+// Add secure flag to all responses in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  }
+  next();
+});
+// Perbaikan session configuration
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(session({
-  secret: process.env.SECRET_SESSION || 'default-secret-key',
+  secret: process.env.SECRET_SESSION, // Wajib tanpa fallback di production
+  store: MongoStore.create({ 
+    mongoUrl: process.env.MONGODB_URI,
+    ttl: 24 * 60 * 60 // Sinkron dengan maxAge
+  }),
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  proxy: true, // Penting untuk Vercel
+  cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000,
-    domain: process.env.NODE_ENV === 'production' ? 'yuii-playcards.vercel.app' : undefined 
+    // Jangan set domain kecuali pakai custom domain
   }
 }));
 
@@ -88,28 +104,38 @@ app.post('/api/loginbygoogle', async (req, res) => {
     const decodedToken = await auth.verifyIdToken(idToken);
     const { uid, email, name, picture } = decodedToken;
     
-    // Set session
-    req.session.user = {
-      uid,
-      email,
-      name,
-      picture,
-      authenticated: true
-    };
-    
-    // Save user info to Firebase Realtime Database
-    const userRef = db.ref(`information-user/${uid}`);
-    await userRef.set({
-      email,
-      name,
-      picture,
-      date: new Date().toISOString()
-    });
-    
-    res.json({
-      success: true,
-      user: { uid, email, name, picture },
-      sessionId: req.sessionID
+    // Regenerate session to prevent fixation
+    req.session.regenerate(async (err) => {
+      if (err) throw err;
+      
+      // Set session
+      req.session.user = {
+        uid,
+        email,
+        name,
+        picture,
+        authenticated: true
+      };
+      
+      // Save user info to Firebase Realtime Database
+      const userRef = db.ref(`information-user/${uid}`);
+      await userRef.set({
+        email,
+        name,
+        picture,
+        date: new Date().toISOString()
+      });
+      
+      // Explicitly save session before sending response
+      req.session.save((err) => {
+        if (err) throw err;
+        
+        res.json({
+          success: true,
+          user: { uid, email, name, picture },
+          sessionId: req.sessionID
+        });
+      });
     });
   } catch (error) {
     console.error('Google login error:', error);

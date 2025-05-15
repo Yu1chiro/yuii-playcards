@@ -39,64 +39,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Google Sign-in
 // Perbaikan Google Sign-in handler
-googleLoginBtn.addEventListener('click', () => {
+// Update your Google Sign-in handler to this:
+googleLoginBtn.addEventListener('click', async () => {
   loginStatus.classList.remove('hidden');
   errorMessage.classList.add('hidden');
   
-  const provider = new firebase.auth.GoogleAuthProvider();
-  
-  firebase.auth()
-    .signInWithPopup(provider)
-    .then((result) => {
-      return result.user.getIdToken(true); // Force token refresh
-    })
-    .then(idToken => {
-      return fetch('/api/loginbygoogle', {
-        method: 'POST',
-        credentials: 'include', // Penting untuk session cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken })
-      });
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();
-    })
-   .then(data => {
-  if (data.success) {
-    // Check if we're in an iframe/popup
-    if (window.opener) {
-      window.opener.postMessage({ 
-        type: 'LOGIN_SUCCESS', 
-        redirectTo: '/dashboard' 
-      }, window.location.origin);
-      window.close();
-    } else {
-      // Normal redirect with cache busting
-      window.location.href = '/dashboard?' + Date.now();
-    }
-  } else {
-    throw new Error(data.message || 'Login failed');
-  }
-})
-    .catch((error) => {
-      console.error('Login error:', error);
-      loginStatus.classList.add('hidden');
-      errorMessage.textContent = error.message || 'An error occurred during sign in';
-      errorMessage.classList.remove('hidden');
-      // Sign out dari Firebase jika login gagal
-      firebase.auth().signOut();
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const result = await firebase.auth().signInWithPopup(provider);
+    const idToken = await result.user.getIdToken(true);
+    
+    const response = await fetch('/api/loginbygoogle', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idToken })
     });
-    // Handle message from popup
-window.addEventListener('message', (event) => {
-  if (event.origin !== window.location.origin) return;
-  
-  if (event.data.type === 'LOGIN_SUCCESS') {
-    window.location.href = event.data.redirectTo;
+    
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // For popup window
+      if (window.opener) {
+        window.opener.postMessage({ 
+          type: 'LOGIN_SUCCESS', 
+          redirectTo: '/dashboard',
+          sessionId: data.sessionId
+        }, window.location.origin);
+        window.close();
+      } 
+      // For regular window
+      else {
+        // Force reload to ensure session is recognized
+        window.location.href = '/dashboard?t=' + Date.now();
+      }
+    } else {
+      throw new Error(data.message || 'Login failed');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    loginStatus.classList.add('hidden');
+    errorMessage.textContent = error.message || 'An error occurred during sign in';
+    errorMessage.classList.remove('hidden');
+    await firebase.auth().signOut();
   }
 });
+
+// Add this outside the click handler
+window.addEventListener('message', (event) => {
+  if (event.origin === window.location.origin && 
+      event.data.type === 'LOGIN_SUCCESS') {
+    // Set a temporary cookie with session ID
+    document.cookie = `session_sync=${event.data.sessionId}; path=/; secure; sameSite=none`;
+    window.location.href = event.data.redirectTo;
+  }
 });
