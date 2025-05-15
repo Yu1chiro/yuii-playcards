@@ -12,23 +12,39 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors({
-  origin: true, // Atau ganti dengan origin spesifik Anda
-  credentials: true
-}));
 
 // Perbaikan session configuration
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+  origin: [
+    'https://yuii-playcards.vercel.app',
+    'http://localhost:3000' // for development
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+// Trust Vercel's proxy
+app.set('trust proxy', 1);
+// Add this before your routes
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    req.headers.origin = req.headers.origin || req.headers.host;
+  }
+  next();
+});
 app.use(session({
-  secret: process.env.SECRET_SESSION || 'default-secret-key', // Pastikan ada fallback
+  secret: process.env.SECRET_SESSION || 'default-secret-key',
   resave: false,
-  saveUninitialized: false, // Ubah ke false untuk GDPR compliance
+  saveUninitialized: false,
   cookie: { 
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000,
+    domain: process.env.NODE_ENV === 'production' ? 'yuii-playcards.vercel.app' : undefined 
   }
 }));
 
@@ -45,7 +61,7 @@ admin.initializeApp({
 const auth = admin.auth();
 const db = admin.database();
 
-// Connect to MongoDB
+// Connect to MongoDB 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));

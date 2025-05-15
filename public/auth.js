@@ -66,16 +66,23 @@ googleLoginBtn.addEventListener('click', () => {
       }
       return response.json();
     })
-    .then(data => {
-      if (data.success) {
-        // Redirect ke dashboard setelah 1 detik untuk memastikan session tersimpan
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
-      } else {
-        throw new Error(data.message || 'Login failed');
-      }
-    })
+   .then(data => {
+  if (data.success) {
+    // Check if we're in an iframe/popup
+    if (window.opener) {
+      window.opener.postMessage({ 
+        type: 'LOGIN_SUCCESS', 
+        redirectTo: '/dashboard' 
+      }, window.location.origin);
+      window.close();
+    } else {
+      // Normal redirect with cache busting
+      window.location.href = '/dashboard?' + Date.now();
+    }
+  } else {
+    throw new Error(data.message || 'Login failed');
+  }
+})
     .catch((error) => {
       console.error('Login error:', error);
       loginStatus.classList.add('hidden');
@@ -84,4 +91,12 @@ googleLoginBtn.addEventListener('click', () => {
       // Sign out dari Firebase jika login gagal
       firebase.auth().signOut();
     });
+    // Handle message from popup
+window.addEventListener('message', (event) => {
+  if (event.origin !== window.location.origin) return;
+  
+  if (event.data.type === 'LOGIN_SUCCESS') {
+    window.location.href = event.data.redirectTo;
+  }
+});
 });
