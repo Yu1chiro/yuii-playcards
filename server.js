@@ -390,6 +390,78 @@ app.get('/api/decks/:id/check', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Failed to check deck' });
   }
 });
+// import json 
+app.post('/api/import-flashcards', authenticate, async (req, res) => {
+  try {
+    const { fileName, flashcardsData } = req.body;
+    const userId = req.session.user.uid;
+    
+    // Validate the incoming data
+    if (!Array.isArray(flashcardsData)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid data format. Expected an array of flashcards.' 
+      });
+    }
+    
+    if (flashcardsData.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'The file contains no flashcards.' 
+      });
+    }
+    
+    // Check if all items have front and back properties
+    const isValidFormat = flashcardsData.every(card => 
+      typeof card === 'object' && card !== null && 
+      'front' in card && 'back' in card &&
+      typeof card.front === 'string' && typeof card.back === 'string'
+    );
+    
+    if (!isValidFormat) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid flashcard format. Each card must have "front" and "back" properties.' 
+      });
+    }
+    
+    // Create a new deck with the filename
+    const deckName = fileName.trim() || 'Imported Flashcards';
+    
+    const newDeck = new Deck({
+      name: deckName,
+      description: `Imported from ${fileName}.json on ${new Date().toLocaleDateString()}`,
+      uuid: userId
+    });
+    
+    await newDeck.save();
+    
+    // Create flashcards in batch
+    const flashcardsToCreate = flashcardsData.map(card => ({
+      front: card.front,
+      back: card.back,
+      deckId: newDeck._id,
+      uuid: userId
+    }));
+    
+    // Insert all flashcards at once for better performance
+    await Flashcard.insertMany(flashcardsToCreate);
+    
+    res.json({ 
+      success: true, 
+      deckName: newDeck.name,
+      deckId: newDeck._id,
+      flashcardCount: flashcardsToCreate.length
+    });
+    
+  } catch (error) {
+    console.error('Import flashcards error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to import flashcards' 
+    });
+  }
+});
 
 // Import deck
 // Import deck - Perbaikan untuk hindari duplikasi
@@ -457,6 +529,12 @@ app.post('/api/decks/import', authenticate, async (req, res) => {
 app.get('/dashboard', authenticate, (req, res) => {
   // Kirim data user ke frontend
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'), {
+    user: req.session.user
+  });
+});
+app.get('/menu', authenticate, (req, res) => {
+  // Kirim data user ke frontend
+  res.sendFile(path.join(__dirname, 'public', 'menu.html'), {
     user: req.session.user
   });
 });

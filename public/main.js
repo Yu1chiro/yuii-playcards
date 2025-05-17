@@ -934,14 +934,6 @@ function deleteDeck(deckId) {
   .then(response => {
     if (response.ok) {
       fetchDecks();
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Deck deleted',
-        showConfirmButton: false,
-        timer: 1500
-      });
       setTimeout(() => {
         window.location.reload();
       }, 1000);

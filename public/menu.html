@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menu Flashcards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-200 text-gray-800 p-6 min-h-screen">
+
+  <div class="max-w-6xl mx-auto py-12">
+    <h1 class="text-3xl font-bold mb-12 text-center text-indigo-700">
+      <i class="fas fa-cards mr-3"></i>Menu Flashcards
+    </h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Card 1 - Import Deck -->
+      <div class="bg-white shadow-xl rounded-2xl p-6 hover:shadow-2xl transition duration-300 border-l-4 border-blue-500 transform hover:-translate-y-1">
+        <div class="flex items-start mb-4">
+          <div class="bg-blue-100 p-3 rounded-full mr-4">
+            <i class="fas fa-database text-blue-600 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-semibold mb-2 text-gray-800">Import Deck</h2>
+            <p class="text-gray-500 mb-4">Import flashcards from external sources</p>
+          </div>
+        </div>
+        <a href="#" id="import-decks" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <i class="fas fa-file-import mr-2"></i> Import
+        </a>
+      </div>
+
+      <!-- Card 2 - Share Deck -->
+      <div class="bg-white shadow-xl rounded-2xl p-6 hover:shadow-2xl transition duration-300 border-l-4 border-green-500 transform hover:-translate-y-1">
+        <div class="flex items-start mb-4">
+          <div class="bg-green-100 p-3 rounded-full mr-4">
+            <i class="fas fa-share-alt text-green-600 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-semibold mb-2 text-gray-800">Share Deck</h2>
+            <p class="text-gray-500 mb-4">Share your deck with others</p>
+          </div>
+        </div>
+        <a href="#" id="share-decks" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+          <i class="fas fa-share mr-2"></i> Share
+        </a>
+      </div>
+      
+      <!-- Card 3 - Import Json Kanji -->
+      <div class="bg-white shadow-xl rounded-2xl p-6 hover:shadow-2xl transition duration-300 border-l-4 border-purple-500 transform hover:-translate-y-1">
+        <div class="flex items-start mb-4">
+          <div class="bg-amber-100 p-3 rounded-full mr-4">
+            <i class="fas fa-language text-amber-600 text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-semibold mb-2 text-gray-800">Import Json Kanji</h2>
+            <p class="text-gray-500 mb-4">Import kanji flashcards from JSON</p>
+          </div>
+        </div>
+        <a href="#" id="quizlet-import" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+          <i class="fas fa-file-upload mr-2"></i> Import
+        </a>
+      </div>
+    </div>
+  </div>
+ <!-- Mobile Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+      <div class="flex justify-around">
+        <!-- Dashboard -->
+        <a href="/dashboard" class="flex flex-col items-center justify-center p-3 hover:text-indigo-800">
+          <i class="fa-solid fa-house w-6 h-6"></i>
+          <span class="text-xs mt-1">Dashboard</span>
+        </a>
+        <a href="/menu" class="flex flex-col items-center justify-center p-3  hover:text-indigo-800">
+          <i class="fa-solid fa-bars w-6 h-6 "></i>
+          <span class="text-xs mt-1">Menu</span>
+        </a>
+
+        <!-- Quiz -->
+        <a href="/quiz" class="flex flex-col items-center justify-center p-3 text-gray-500 hover:text-indigo-600">
+          <i class="fa-solid fa-circle-play w-6 h-auto"></i>
+          <span class="text-xs mt-1">Quiz</span>
+        </a>
+      
+        <!-- Profile -->
+        <a href="/profile" class="flex flex-col items-center justify-center p-3 text-gray-500 hover:text-indigo-600">
+        <i class="fa-solid fa-user w-6 h-6 "></i>
+          <span class="text-xs mt-1">Profile</span>
+        </a>
+        <a href="#" id="logoutBtn" class="flex flex-col items-center justify-center p-3 text-gray-500 hover:text-indigo-600">
+       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="log-out" class="lucide lucide-log-out w-6 h-6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" x2="9" y1="12" y2="12"></line></svg>
+          <span class="text-xs mt-1">Signout</span>
+        </a>
+      </div>
+    </nav>
+ 
+  <!-- Share Deck Modal -->
+  <div id="shareDecksModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-900">
+          <i class="fas fa-share-nodes text-green-500 mr-2"></i>Share Deck
+        </h3>
+        <button id="closeShareModal" class="text-gray-400 hover:text-gray-500 text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="mb-6">
+        <label for="selectDeck" class="block text-sm font-medium text-gray-700 mb-2">
+          <i class="fas fa-layer-group text-green-500 mr-2"></i>Select Deck to Share
+        </label>
+        <select id="selectDeck" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base">
+          <option value="">-- Select a Deck --</option>
+        </select>
+      </div>
+      
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <i class="fas fa-id-card text-green-500 mr-2"></i>Deck ID to Copy
+        </label>
+        <div class="flex items-center">
+          <input type="text" id="deckIdToCopy" class="mt-1 block w-full border border-gray-300 rounded-l-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-base" readonly>
+          <button id="copyDeckId" class="px-5 py-3 bg-green-600 text-white rounded-r-lg hover:bg-green-700 transition-colors">
+            <i class="fas fa-copy mr-2"></i>Copy
+          </button>
+        </div>
+      </div>
+      
+      <p class="text-sm text-gray-500 mt-4">
+        <i class="fas fa-circle-info text-green-500 mr-2"></i>Share this Deck ID with your friend. They can import it from their dashboard.
+      </p>
+    </div>
+  </div>
+
+  <!-- Import Deck Modal -->
+  <div id="importDeckModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-900">
+          <i class="fas fa-file-import text-blue-500 mr-2"></i>Import Deck
+        </h3>
+        <button id="closeImportModal" class="text-gray-400 hover:text-gray-500 text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="mb-6">
+        <label for="deckIdToImport" class="block text-sm font-medium text-gray-700 mb-2">
+          <i class="fas fa-key text-blue-500 mr-2"></i>Deck ID
+        </label>
+        <input type="text" id="deckIdToImport" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base" placeholder="Paste the Deck ID here">
+      </div>
+      
+      <button id="importDeckBtn" class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+        <i class="fas fa-download mr-2"></i>Import Deck
+      </button>
+    </div>
+  </div>
+
+  <!-- JSON Import Modal -->
+  <div id="import-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-40">
+    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full z-50">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-900">
+          <i class="fas fa-file-code text-purple-500 mr-2"></i>Import Flashcards
+        </h3>
+        <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="mb-6">
+        <p class="text-sm text-gray-600 mb-4">
+         Need sample flashcards? Download
+         <a href="/kanji-n5.json" class="download-json mb-4 text-blue-600 hover:text-blue-800">here</a>
+        </p>
+        
+        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+          <label class="block cursor-pointer">
+            <input id="file-input" type="file" accept=".json" class="hidden">
+            <i class="fas fa-cloud-upload-alt text-4xl text-purple-400 mb-3"></i>
+            <span id="file-name" class="block text-sm text-gray-500 mb-4">No file selected</span>
+            <span class="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+              <i class="fas fa-folder-open mr-2"></i>Select File
+            </span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="flex justify-end space-x-3">
+        <button id="cancel-import" class="px-5 py-2 text-gray-600 hover:text-gray-800 rounded-lg border border-gray-300 hover:bg-gray-100">
+          <i class="fas fa-times mr-2"></i>Cancel
+        </button>
+        <button id="submit-import" class="px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-300 disabled:cursor-not-allowed" disabled>
+          <i class="fas fa-check mr-2"></i>Import
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Tangani semua link yang ingin otomatis download file .json
+    document.querySelectorAll('a.download-json').forEach(link => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault(); // Cegah default buka di browser
+
+        const fileUrl = this.getAttribute('href');
+        const fileName = fileUrl.split('/').pop();
+
+        fetch(fileUrl)
+          .then(response => {
+            if (!response.ok) throw new Error('Gagal ambil file JSON');
+            return response.blob();
+          })
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          })
+          .catch(err => {
+            alert('Gagal download: ' + err.message);
+          });
+      });
+    });
+  </script>
+<script src="/shared.js"></script>
+  <script src="/quizlet.js"></script>
+</body>
+</html>

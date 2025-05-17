@@ -169,7 +169,7 @@ importDeckBtn.addEventListener('click', async () => {
     }
     
     const result = await importResponse.json();
-    showToast('success', 'Deck imported successfully');
+    showToast('success', 'Check deck in your daashboard!');
 
     // Close modal and reset
     importDeckModal.classList.add('hidden');

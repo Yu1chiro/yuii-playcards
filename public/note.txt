@@ -1,0 +1,33 @@
+
+(function downloadQuizletFlashcards() {
+  const section = document.querySelector('section[data-testid="terms-list"]');
+  if (!section) {
+    console.error('❌ Tidak ditemukan section dengan data-testid="terms-list"');
+    return;
+  }
+
+  const kanjiNodes = section.querySelectorAll('span.TermText.notranslate.lang-ja');
+  const artiNodes = section.querySelectorAll('span.TermText.notranslate.lang-id');
+
+  if (kanjiNodes.length !== artiNodes.length) {
+    console.warn(`⚠️ Jumlah tidak cocok. Kanji: ${kanjiNodes.length}, Arti: ${artiNodes.length}`);
+  }
+
+  const flashcards = [];
+  for (let i = 0; i < Math.min(kanjiNodes.length, artiNodes.length); i++) {
+    flashcards.push({
+      front: kanjiNodes[i].innerText.trim(),
+      back: artiNodes[i].innerText.trim()
+    });
+  }
+
+  const blob = new Blob([JSON.stringify(flashcards, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'kanji-n5.json';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  console.log(`✅ Berhasil scrape ${flashcards.length} flashcards.`);
+})();
